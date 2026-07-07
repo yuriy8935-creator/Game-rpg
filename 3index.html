@@ -1,0 +1,162 @@
+import random
+
+class Civilization:
+    def __init__(self, name, regime="Племенной строй", religion="Тотемизм"):
+        self.name = name
+        self.regime = regime
+        self.religion = religion
+        self.population = 100
+        self.food = 500
+        self.culture = 10
+        self.military = 10
+        self.is_alive = True
+
+    def show_status(self):
+        print(f"\n--- Народ: {self.name} ---")
+        print(f"Режим: {self.regime} | Религия: {self.religion}")
+        print(f"Население: {self.population} | Еда: {self.food}")
+        print(f"Культура: {self.culture} | Армия: {self.military}")
+
+class GameSimulation:
+    def __init__(self):
+        self.turn = 1
+        self.player = None
+        self.ai_tribes = [
+            Civilization("Атланты", "Меритократия", "Культ Солнца"),
+            Civilization("Гиперборейцы", "Военная диктатура", "Скандинавский пантеон")
+        ]
+
+    def setup_game(self):
+        print("Добро пожаловать в Симуляцию Богов!")
+        name = input("Дайте имя вашему народу: ")
+        
+        print("\nВыберите политический режим:")
+        print("1. Марксизм (+Эгалитаризм, больше еды, меньше культуры)")
+        print("2. Меритократия (+Развитие, больше культуры, средняя армия)")
+        print("3. Теократия (+Религиозный фанатизм, большая армия, меньше еды)")
+        choice = input("Ваш выбор (1-3): ")
+        regime = "Марксизм" if choice == "1" else "Меритократия" if choice == "2" else "Теократия"
+
+        print("\nВыберите религиозный путь:")
+        print("1. Научный атеизм (+Производство)")
+        print("2. Монотеизм (+Единство народа)")
+        print("3. Пантеизм (+Связь с природой)")
+        choice_rel = input("Ваш выбор (1-3): ")
+        religion = "Атеизм" if choice_rel == "1" else "Монотеизм" if choice_rel == "2" else "Пантеизм"
+
+        self.player = Civilization(name, regime, religion)
+
+    def process_turn(self):
+        print(f"\n===== ХОД {self.turn} =====")
+        
+        # Эффекты режимов
+        if self.player.regime == "Марксизм":
+            self.player.food += int(self.player.population * 1.5)
+            self.player.culture += 2
+        elif self.player.regime == "Меритократия":
+            self.player.food += self.player.population
+            self.player.culture += 10
+        else: # Теократия
+            self.player.food += int(self.player.population * 0.8)
+            self.player.military += 5
+
+        # Потребление еды
+        self.player.food -= self.player.population
+        if self.player.food < 0:
+            starved = abs(self.player.food) // 2
+            self.player.population -= starved
+            self.player.food = 0
+            print(f"⚠️ Голод! Погибло {starved} человек.")
+        else:
+            growth = random.randint(5, 15)
+            self.player.population += growth
+            print(f"👶 Рождаемость: +{growth} человек.")
+
+        # Случайное событие
+        self.trigger_event()
+
+        # Ход ИИ-конкурентов
+        for ai in self.ai_tribes:
+            if ai.is_alive:
+                ai.population += random.randint(5, 12)
+                ai.military += random.randint(1, 4)
+
+        self.player.show_status()
+        self.show_competitors()
+
+        # Меню действий игрока
+        print("\nВаше решение как правителя:")
+        print("1. Инвестировать в армию (за счет еды)")
+        print("2. Развивать культуру")
+        print("3. Напасть на соседнее племя")
+        print("4. Пропустить ход")
+        
+        action = input("Выберите действие (1-4): ")
+        if action == "1" and self.player.food >= 100:
+            self.player.military += 15
+            self.player.food -= 100
+        elif action == "2":
+            self.player.culture += 20
+        elif action == "3":
+            self.battle()
+
+        self.turn += 1
+        if self.player.population <= 0:
+            self.player.is_alive = False
+
+    def trigger_event(self):
+        events = [
+            ("Племя нашло плодородные земли! Еда +100.", "food", 100),
+            ("Вспыхнула эпидемия. Население -15.", "population", -15),
+            ("Философы переосмыслили бытие. Культура +30.", "culture", 30)
+        ]
+        ev = random.choice(events)
+        print(f"✨ Событие: {ev[0]}")
+        setattr(self.player, ev[1], getattr(self.player, ev[1]) + ev[2])
+
+    def battle(self):
+        print("\nНа кого напасть?")
+        for i, ai in enumerate(self.ai_tribes):
+            if ai.is_alive:
+                print(f"{i+1}. {ai.name} (Армия: {ai.military})")
+        
+        target_idx = int(input("Выбор: ")) - 1
+        enemy = self.ai_tribes[target_idx]
+
+        print(f"⚔️ Битва против {enemy.name}!")
+        if self.player.military > enemy.military:
+            loot = random.randint(100, 300)
+            self.player.food += loot
+            enemy.population -= random.randint(20, 40)
+            enemy.military //= 2
+            print(f"🎉 Победа! Захвачено {loot} еды.")
+            if enemy.population <= 0:
+                enemy.is_alive = False
+                print(f"💀 Племя {enemy.name} полностью уничтожено!")
+        else:
+            self.player.population -= random.randint(15, 30)
+            self.player.military //= 2
+            print("❌ Поражение! Ваша армия разбита.")
+
+    def show_competitors(self):
+        print("\n--- Соперники ---")
+        for ai in self.ai_tribes:
+            status = f"Поп: {ai.population} | Сила: {ai.military}" if ai.is_alive else "УНИЧТОЖЕНЫ"
+            print(f"[{ai.name}]: {status}")
+
+    def run(self):
+        self.setup_game()
+        while self.player.is_alive and any(ai.is_alive for ai in self.ai_tribes):
+            self.process_turn()
+            if self.turn > 10:
+                break
+        
+        print("\n===== ИГРА ОКОНЧЕНА =====")
+        if self.player.is_alive:
+            print(f"Ваша цивилизация выжила! Финальная культура: {self.player.culture}")
+        else:
+            print("Ваш народ исчез со страниц истории.")
+
+if __name__ == "__main__":
+    game = GameSimulation()
+    game.run()
