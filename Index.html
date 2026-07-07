@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Wheel RPG — Прокачай Свою Жизнь</title>
+    <!-- Подключаем Chart.js для отрисовки колеса -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-color: #1e293b;
+            --accent-color: #3b82f6;
+            --text-color: #38bdf8;
+            --light-text: #f8fafc;
+            --success-color: #10b981;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--light-text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--panel-color);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            color: var(--text-color);
+            margin-top: 0;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Экран кастомизации */
+        .creation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .creation-grid { grid-template-columns: 1fr; }
+            .game-layout { grid-template-columns: 1fr !important; }
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        .range-slider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .range-slider input {
+            flex: 1;
+            accent-color: var(--accent-color);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #2563eb; }
+
+        /* Игровой интерфейс */
+        .game-layout {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 30px;
+        }
+
+        .char-card {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+
+        .stats-bar {
+            background: #334155;
+            height: 16px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .stats-fill {
+            background: linear-gradient(90deg, #3b82f6, #38bdf8);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .wheel-container {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #334155;
+        }
+
+        /* Квесты и магазин */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: #334155;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+        }
+
+        .item-list {
+            max-height: 550px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .item-card {
+            background: #0f172a;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #334155;
+            gap: 15px;
+        }
+
+        .item-info { flex: 1; }
+
+        .reward-btn {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ЭКРАН СОЗДАНИЯ ПЕРСОНАЖА -->
+    <div id="creation-screen">
+        <h1>⚔️ Создание Персонажа ⚔️</h1>
+        <div class="creation-grid">
+            <div>
+                <h3>Основное</h3>
+                <div class="form-group">
+                    <label>Имя Героя</label>
+                    <input type="text" id="char-name" value="Алекс">
+                </div>
+                <div class="form-group">
+                    <label>Пол</label>
+                    <select id="char-gender">
+                        <option value="Парень">Парень</option>
+                        <option value="Девушка">Девушка</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Главный Навык (Специализация)</label>
+                    <select id="char-skill">
+                        <option value="Дисциплина">🛡️ Дисциплина</option>
+                        <option value="Интеллект">🔮 Интеллект</option>
+                        <option value="Коммуникация">🗣️ Коммуникация</option>
+                        <option value="Творчество">🎨 Творчество</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div>
+                <h3>Стартовые Сферы (Уровень 1-10)</h3>
+                <div id="spheres-inputs"></div>
+            </div>
+        </div>
+        <button onclick="startGame()" style="margin-top: 25px;">Начать Жизненное Приключение 🚀</button>
+    </div>
+
+    <!-- ГЛАВНЫЙ ИГРОВОЙ ЭКРАН -->
+    <div id="game-screen" class="hidden">
+        <div class="game-layout">
+            <!-- Левая панель: Статы и Колесо -->
+            <div>
+                <div class="char-card">
+                    <h2 id="display-name" style="text-align:left; margin-bottom:10px;">Имя</h2>
+                    <div style="margin-bottom: 5px;">🏅 Уровень: <span id="display-lvl" style="font-weight:bold; color:var(--text-color);">1</span></div>
+                    <div>✨ Опыт (XP): <span id="display-xp">0</span> / 100</div>
+                    <div class="stats-bar"><div id="xp-bar" class="stats-fill"></div></div>
+                    <div style="margin-top: 15px; font-size: 18px;">💰 Золото: <span id="display-gold" style="color: #ffd700; font-weight: bold;">0</span>g</div>
+                    <div style="margin-top: 5px; color: #94a3b8;">🔥 Навык: <span id="display-skill">Нет</span></div>
+                </div>
+                
+                <div class="wheel-container">
+                    <canvas id="lifecycleWheel" width="360" height="360"></canvas>
+                </div>
+            </div>
+
+            <!-- Правая панель: Квесты и Магазин -->
+            <div>
+                <div class="tabs">
+                    <button class="tab-btn active" id="btn-quests" onclick="switchTab('quests')">🎯 Квесты Прокачки</button>
+                    <button class="tab-btn" id="btn-rewards" onclick="switchTab('rewards')">🎁 Магазин Наград</button>
+                </div>
+
+                <div id="tab-quests-content">
+                    <div class="item-list" id="quests-list"></div>
+                </div>
+
+                <div id="tab-rewards-content" class="hidden">
+                    <div class="item-list" id="rewards-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const spheresList = [
+        { id: 'health', name: '❤️ Здоровье и Спорт' },
+        { id: 'career', name: '💼 Карьера и Бизнес' },
+        { id: 'finance', name: '💵 Финансы' },
+        { id: 'family', name: '👥 Отношения и Семья' },
+        { id: 'friends', name: '🎉 Друзья и Окружение' },
+        { id: 'growth', name: '🧠 Личностный Рост' },
+        { id: 'bright', name: '🏄 Яркость Жизни' },
+        { id: 'spirit', name: '🧘 Духовность и Хобби' }
+    ];
+
+    const questTemplates = {
+        health: "Сделать зарядку / Потренироваться / Пройти 10к шагов",
+        career: "Сфокусированно поработать 1 час / Сделать важную задачу",
+        finance: "Внести расходы в трекер / Отложить деньги в накопления",
+        family: "Провести качественное время с близкими без гаджетов",
+        friends: "Позвонить или написать другу / Завести новое знакомство",
+        growth: "Почитать книгу 20 минут / Посмотреть обучающий урок",
+        bright: "Попробовать что-то новое / Сходить на прогулку в новое место",
+        spirit: "Медитация 10 минут / Выделить время на любимое хобби"
+    };
+
+    const defaultRewards = [
+        { name: "🎮 1 час компьютерных игр", cost: 15 },
+        { name: "🍕 Скушать любимый читмил / вкусняшку", cost: 20 },
+        { name: "🎬 Посмотреть серию сериала / YouTube видео", cost: 10 },
+        { name: "🛍️ Покупка приятной мелкой вещи", cost: 50 },
+        { name: "😴 Сон посреди дня или полный день отдыха", cost: 30 }
+    ];
+
+    let player = {
+        name: "", gender: "", mainSkill: "",
+        level: 1, xp: 0, gold: 0,
+        spheres: {}
+    };
+
+    let wheelChart;
+
+    // Генерируем ползунки сфер на экране создания
+    const inputsContainer = document.getElementById('spheres-inputs');
